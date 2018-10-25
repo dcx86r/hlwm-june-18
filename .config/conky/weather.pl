@@ -4,15 +4,25 @@
 # ${execi 900 /path/to/script/weather.pl}
 
 use Encode;
-use LWP::Simple;
+use LWP::Simple qw(get $ua);
 use XML::LibXML;
 use XML::LibXML::XPathContext;
+
+sub net_error {
+	my $msg = shift;
+	print encode_utf8($msg);
+	exit;
+}
+
+net_error("no network connection") unless defined(my $bool = $ua->is_online);
 
 # local weather feed from Weather Canada
 my $feed = "https://weather.gc.ca/rss/city/on-85_e.xml";
 
-# get feed
+# get feed or die trying
+$ua->timeout(5);
 my $page = get($feed);
+net_error("API not reached") unless defined($page);
 
 $page =~ m/<?xml/ or print "Doc empty or invalid" and exit;
 
